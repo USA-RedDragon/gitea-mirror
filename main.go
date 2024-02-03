@@ -11,7 +11,6 @@ import (
 
 func getRepos(client *github.Client, data chan *github.Repository) error {
 	opt := &github.RepositoryListByAuthenticatedUserOptions{
-		Affiliation: "organization_member",
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 	for {
