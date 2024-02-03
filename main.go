@@ -53,7 +53,8 @@ func main() {
 	githubClient := github.NewClient(nil).WithAuthToken(githubToken)
 	giteaClient, err := gitea.NewClient(giteaURL, gitea.SetToken(giteaToken))
 	if err != nil {
-		panic(err)
+		color.Red("Error creating Gitea client: %s", err)
+		os.Exit(1)
 	}
 
 	reposChannel := make(chan *github.Repository)
@@ -61,7 +62,7 @@ func main() {
 		err := getRepos(githubClient, reposChannel)
 		close(reposChannel)
 		if err != nil {
-			panic(err)
+			color.Red("Error getting repos: %s", err)
 		}
 	}()
 
@@ -90,11 +91,11 @@ func main() {
 				LFS:            true,
 			})
 			if err != nil {
-				panic(err)
+				color.Red("Error mirroring %s: %s", *githubRepo.Name, err)
 			}
+			color.Green("Mirror complete")
 		} else {
 			color.Yellow("Repo already exists, skipping")
 		}
-		color.Green("Mirror complete")
 	}
 }
