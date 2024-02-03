@@ -87,6 +87,7 @@ func main() {
 				Releases:       true,
 				Mirror:         true,
 				MirrorInterval: "10m",
+				LFS:            true,
 			})
 			if err != nil {
 				panic(err)
