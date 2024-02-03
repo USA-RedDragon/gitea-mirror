@@ -74,6 +74,7 @@ func main() {
 		if err != nil || foundRepo == nil {
 			_, _, err = giteaClient.MigrateRepo(gitea.MigrateRepoOption{
 				RepoName:       *githubRepo.Name,
+				RepoOwner:      giteaOrg,
 				CloneAddr:      *githubRepo.CloneURL,
 				AuthToken:      githubToken,
 				Private:        *githubRepo.Private,
