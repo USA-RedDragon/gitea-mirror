@@ -9,12 +9,13 @@ import (
 	"github.com/google/go-github/v58/github"
 )
 
-func getRepos(client *github.Client, data chan *github.Repository) error {
+func getUserRepos(client *github.Client, data chan *github.Repository) error {
 	opt := &github.RepositoryListByAuthenticatedUserOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 	for {
 		repos, resp, err := client.Repositories.ListByAuthenticatedUser(context.Background(), opt)
+
 		if err != nil {
 			return err
 		}
@@ -25,6 +26,34 @@ func getRepos(client *github.Client, data chan *github.Repository) error {
 			return nil
 		}
 		opt.Page = resp.NextPage
+	}
+}
+
+func getOrgRepos(client *github.Client, entity string, data chan *github.Repository) error {
+	opt := &github.RepositoryListByOrgOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+	for {
+		repos, resp, err := client.Repositories.ListByOrg(context.Background(), entity, opt)
+
+		if err != nil {
+			return err
+		}
+		for _, repo := range repos {
+			data <- repo
+		}
+		if resp.NextPage == 0 {
+			return nil
+		}
+		opt.Page = resp.NextPage
+	}
+}
+
+func getRepos(client *github.Client, entity string, data chan *github.Repository, org bool) error {
+	if org {
+		return getOrgRepos(client, entity, data)
+	} else {
+		return getUserRepos(client, data)
 	}
 }
 
@@ -45,10 +74,41 @@ func main() {
 		os.Exit(1)
 	}
 	giteaOrg := os.Getenv("GITEA_ORG")
-	if giteaOrg == "" {
-		color.Red("GITEA_ORG is not set")
+	giteaUser := os.Getenv("GITEA_USER")
+	if giteaOrg == "" && giteaUser == "" {
+		color.Red("GITEA_ORG or GITEA_USER is not set")
+		os.Exit(1)
+	} else if giteaOrg != "" && giteaUser != "" {
+		color.Red("GITEA_ORG and GITEA_USER are both set")
 		os.Exit(1)
 	}
+	githubOrg := os.Getenv("GITHUB_ORG")
+	githubUser := os.Getenv("GITHUB_USER")
+	if giteaOrg == "" && giteaUser == "" {
+		color.Red("GITHUB_ORG or GITHUB_USER is not set")
+		os.Exit(1)
+	} else if giteaOrg != "" && giteaUser != "" {
+		color.Red("GITHUB_ORG and GITHUB_USER are both set")
+		os.Exit(1)
+	}
+
+	var gitHubEntity string
+	var org bool
+	if githubOrg != "" {
+		gitHubEntity = githubOrg
+		org = true
+	} else {
+		gitHubEntity = githubUser
+		org = false
+	}
+
+	var giteaEntity string
+	if giteaOrg != "" {
+		giteaEntity = giteaOrg
+	} else {
+		giteaEntity = giteaUser
+	}
+
 	githubClient := github.NewClient(nil).WithAuthToken(githubToken)
 	giteaClient, err := gitea.NewClient(giteaURL, gitea.SetToken(giteaToken))
 	if err != nil {
@@ -58,7 +118,7 @@ func main() {
 
 	reposChannel := make(chan *github.Repository)
 	go func() {
-		err := getRepos(githubClient, reposChannel)
+		err := getRepos(githubClient, gitHubEntity, reposChannel, org)
 		close(reposChannel)
 		if err != nil {
 			color.Red("Error getting repos: %s", err)
@@ -70,11 +130,11 @@ func main() {
 			githubRepo.Description = new(string)
 		}
 		color.Cyan("Mirroring %s", *githubRepo.Name)
-		foundRepo, _, err := giteaClient.GetRepo(giteaOrg, *githubRepo.Name)
+		foundRepo, _, err := giteaClient.GetRepo(giteaEntity, *githubRepo.Name)
 		if err != nil || foundRepo == nil {
 			_, _, err = giteaClient.MigrateRepo(gitea.MigrateRepoOption{
 				RepoName:       *githubRepo.Name,
-				RepoOwner:      giteaOrg,
+				RepoOwner:      giteaEntity,
 				CloneAddr:      *githubRepo.CloneURL,
 				AuthToken:      githubToken,
 				Private:        *githubRepo.Private,
