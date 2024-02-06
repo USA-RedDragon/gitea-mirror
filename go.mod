@@ -1,6 +1,6 @@
 module github.com/USA-RedDragon/gitea-archive-mirror
 
-go 1.21.6
+go 1.21.7
 
 require (
 	code.gitea.io/sdk/gitea v0.17.1
