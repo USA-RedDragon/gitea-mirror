@@ -1,0 +1,36 @@
+github:
+  # enterprise-url: "https://github.example.com"
+  # token: "ghp_1234"
+  mirroring-token: "ghp_1234"
+  app-id: 1234
+  app-install-id: 1234
+  app-private-key-path: "path/to/private-key.pem"
+
+gitea:
+  url: "https://gitea.example.com"
+  token: "1234"
+
+mirrors:
+- prefix: archived
+  from:
+    type: user
+    name: USA-RedDragon
+    filter:
+      only-archived: true
+  to:
+    name: USA-RedDragon
+# All repos
+- from:
+    type: user
+    name: USA-RedDragon
+  to:
+    name: USA-RedDragon
+# Filtered by name
+- from:
+    type: user
+    name: USA-RedDragon
+    filter:
+      include:
+      - ".*-archive"
+  to:
+    name: USA-RedDragon
