@@ -106,7 +106,7 @@ func (m *Mirror) runSidecar() {
 					properURL.User = url.UserPassword("oauth2", token)
 					remoteURL = properURL.String()
 					gitConfig.Raw.Section("remote").Subsection("origin").SetOption("url", remoteURL)
-					slog.Info("Updated remote URL", "url", remoteURL)
+					slog.Info("Updated remote URL")
 				}
 			}
 
