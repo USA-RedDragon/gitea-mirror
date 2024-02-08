@@ -12,6 +12,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	git "github.com/go-git/go-git/v5"
+	gitConfig "github.com/go-git/go-git/v5/config"
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
 	"github.com/google/go-github/v58/github"
 )
@@ -33,19 +34,14 @@ func (m *Mirror) runSidecar() {
 				continue
 			}
 
-			// Look at the git config, find the PAT and check if it's valid
-			gitConfig, err := gitRepo.Config()
-			if err != nil {
-				slog.Error("Error getting git config", "error", err)
-				continue
-			}
-
 			// Grab the remote URL
-			remoteURL := gitConfig.Raw.Section("remote").Subsection("origin").Option("url")
-			if remoteURL == "" {
+			remote, err := gitRepo.Remote("origin")
+			if err != nil {
 				// This is a valid situation where the repo is not mirrored
 				continue
 			}
+
+			remoteURL := remote.Config().URLs[0]
 
 			properURL, err := url.Parse(remoteURL)
 			if err != nil {
@@ -105,13 +101,20 @@ func (m *Mirror) runSidecar() {
 						slog.Error("Error creating installation token", "error", err)
 						continue
 					}
-					token := installToken.GetToken()
-					properURL.User = url.UserPassword("oauth2", token)
-					remoteURL = properURL.String()
-					gitConfig.Raw.Section("remote").Subsection("origin").SetOption("url", remoteURL)
-					err = gitRepo.SetConfig(gitConfig)
+					properURL.User = url.UserPassword("oauth2", installToken.GetToken())
+					// Save the change
+					err = gitRepo.DeleteRemote("origin")
 					if err != nil {
-						slog.Error("Error setting remote URL", "error", err)
+						slog.Error("Error deleting remote", "error", err)
+						continue
+					}
+
+					_, err = gitRepo.CreateRemote(&gitConfig.RemoteConfig{
+						Name: "origin",
+						URLs: []string{properURL.String()},
+					})
+					if err != nil {
+						slog.Error("Error creating remote", "error", err)
 						continue
 					}
 					slog.Info("Updated remote URL")
