@@ -90,10 +90,15 @@ func (m *Mirror) runSidecar() {
 				githubClient := github.NewClient(rateLimiter).WithAuthToken(pat)
 
 				repoParts := strings.Split(strings.TrimPrefix(properURL.Path, "/"), "/")
+				if len(repoParts) != 2 {
+					slog.Error("Invalid repo path", "path", properURL.Path)
+					continue
+				}
 				orgOrUser := repoParts[0]
+				repoWoGit := strings.TrimSuffix(repoParts[1], ".git")
 
 				// Check if the PAT is valid
-				_, _, err = githubClient.PullRequests.List(context.Background(), orgOrUser, repoParts[1], &github.PullRequestListOptions{})
+				_, _, err = githubClient.PullRequests.List(context.Background(), orgOrUser, repoWoGit, &github.PullRequestListOptions{})
 				if err != nil {
 					// PAT is invalid, refresh it
 					slog.Info("PAT is invalid, refreshing", "repo", repo, "error", err)
