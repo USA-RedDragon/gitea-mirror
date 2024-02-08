@@ -6,11 +6,11 @@ import (
 	"log/slog"
 
 	"code.gitea.io/sdk/gitea"
-	"github.com/USA-RedDragon/gitea-mirror/internal/config"
+	configPkg "github.com/USA-RedDragon/gitea-mirror/internal/config"
 	"github.com/google/go-github/v58/github"
 )
 
-func getPATUserRepos(client *github.Client, data chan *github.Repository, filter config.FilterConfig) error {
+func getPATUserRepos(client *github.Client, data chan *github.Repository, filter configPkg.FilterConfig) error {
 	opt := &github.RepositoryListByAuthenticatedUserOptions{
 		Affiliation: "owner",
 		ListOptions: github.ListOptions{PerPage: 100},
@@ -35,7 +35,7 @@ func getPATUserRepos(client *github.Client, data chan *github.Repository, filter
 	}
 }
 
-func getAppUserRepos(client *github.Client, user string, data chan *github.Repository, filter config.FilterConfig) error {
+func getAppUserRepos(client *github.Client, user string, data chan *github.Repository, filter configPkg.FilterConfig) error {
 	opt := &github.RepositoryListByUserOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
@@ -59,7 +59,7 @@ func getAppUserRepos(client *github.Client, user string, data chan *github.Repos
 	}
 }
 
-func getOrgRepos(client *github.Client, entity string, data chan *github.Repository, filter config.FilterConfig) error {
+func getOrgRepos(client *github.Client, entity string, data chan *github.Repository, filter configPkg.FilterConfig) error {
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
@@ -83,7 +83,7 @@ func getOrgRepos(client *github.Client, entity string, data chan *github.Reposit
 	}
 }
 
-func Run(config *config.Config) error {
+func Run(config *configPkg.Config) error {
 	if len(config.Mirrors) == 0 {
 		slog.Error("No mirrors defined")
 		return nil
@@ -99,34 +99,36 @@ func Run(config *config.Config) error {
 		reposChannel := make(chan *github.Repository)
 		from := mirror.From
 		switch from.Type {
-		case "user":
+		case configPkg.User:
 			slog.Info("Mirroring user", "user", from.Name)
 			go func() {
 				if config.GitHubAuth.Token != "" {
 					err := getPATUserRepos(githubClient, reposChannel, from.Filter)
-					close(reposChannel)
+					defer close(reposChannel)
 					if err != nil {
 						slog.Error("Error getting repos", "error", err)
 					}
 				} else {
 					err := getAppUserRepos(githubClient, from.Name, reposChannel, from.Filter)
-					close(reposChannel)
+					defer close(reposChannel)
 					if err != nil {
 						slog.Error("Error getting repos", "error", err)
 					}
 				}
 			}()
-		case "org":
+		case configPkg.Organization:
 			slog.Info("Mirroring org", "org", from.Name)
 			go func() {
 				err := getOrgRepos(githubClient, from.Name, reposChannel, from.Filter)
-				close(reposChannel)
+				defer close(reposChannel)
 				if err != nil {
 					slog.Error("Error getting repos", "error", err)
 				}
 			}()
 		default:
 			slog.Error("Unknown source type", "type", from.Type)
+			defer close(reposChannel)
+			continue
 		}
 
 		for githubRepo := range reposChannel {
