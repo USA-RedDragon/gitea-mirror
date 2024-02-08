@@ -1,14 +1,19 @@
 package mirror
 
 import (
+	"context"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	git "github.com/go-git/go-git/v5"
+	"github.com/gofri/go-github-ratelimit/github_ratelimit"
+	"github.com/google/go-github/v58/github"
 )
 
 func (m *Mirror) runSidecar() {
@@ -38,7 +43,7 @@ func (m *Mirror) runSidecar() {
 			// Grab the remote URL
 			remoteURL := gitConfig.Raw.Section("remote").Subsection("origin").Option("url")
 			if remoteURL == "" {
-				slog.Error("No remote URL found")
+				// This is a valid situation where the repo is not mirrored
 				continue
 			}
 
@@ -62,8 +67,47 @@ func (m *Mirror) runSidecar() {
 
 			if properURL.User.Username() == "oauth2" && pat != "" {
 				slog.Info("PAT found")
+
+				rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(nil)
+				if err != nil {
+					slog.Error("Error creating rate limiter", "error", err)
+					continue
+				}
+
+				privatePem, err := os.ReadFile(m.config.GitHubAuth.PrivateKeyPath)
+				if err != nil {
+					slog.Error("Error reading private key", "error", err)
+					continue
+				}
+
+				appItr, err := ghinstallation.NewAppsTransport(rateLimiter.Transport, int64(m.config.GitHubAuth.AppID), privatePem)
+				if err != nil {
+					slog.Error("Error creating app transport", "error", err)
+					continue
+				}
+				githubAppClient := github.NewClient(&http.Client{Transport: appItr})
+
+				githubClient := github.NewClient(rateLimiter).WithAuthToken(pat)
+
+				repoParts := strings.Split(strings.TrimPrefix(properURL.Path, "/"), "/")
+				orgOrUser := repoParts[0]
+
 				// Check if the PAT is valid
-				// If it's not, refresh it and update the git config
+				_, _, err = githubClient.PullRequests.List(context.Background(), orgOrUser, repoParts[1], &github.PullRequestListOptions{})
+				if err != nil {
+					// PAT is invalid, refresh it
+					slog.Info("PAT is invalid, refreshing")
+					installToken, _, err := githubAppClient.Apps.CreateInstallationToken(context.Background(), int64(m.config.GitHubAuth.InstallationID), &github.InstallationTokenOptions{})
+					if err != nil {
+						slog.Error("Error creating installation token", "error", err)
+						continue
+					}
+					token := installToken.GetToken()
+					properURL.User = url.UserPassword("oauth2", token)
+					remoteURL = properURL.String()
+					gitConfig.Raw.Section("remote").Subsection("origin").SetOption("url", remoteURL)
+					slog.Info("Updated remote URL", "url", remoteURL)
+				}
 			}
 
 		case <-time.After(45 * time.Minute):
