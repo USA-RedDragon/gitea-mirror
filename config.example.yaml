@@ -1,14 +1,22 @@
+# Authentication details for GitHub
 github:
+  # enterprise-url is optional
   # enterprise-url: "https://github.example.com"
+
+  # one of either token or app-* must be set for PAT or GitHub App authentication
   # token: "ghp_1234"
-  # mirroring-token: "ghp_1234"
   app-id: 1234
   app-install-id: 1234
   app-private-key-path: "path/to/private-key.pem"
 
+  # The mirroring-token is optional and is used only for the mirror connection from Gitea to GitHub
+  # mirroring-token: "ghp_1234"
+
+# Authentication details for Gitea
 gitea:
   url: "https://gitea.example.com"
   token: "1234"
+  repos-path: "/data/git/repositories"
 
 # Sidecar mode is for allowing Gitea to mirror as a GitHub App. This should
 # only be used when a GitHub App is used to authenticate.
