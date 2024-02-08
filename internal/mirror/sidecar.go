@@ -2,10 +2,13 @@ package mirror
 
 import (
 	"log/slog"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	git "github.com/go-git/go-git/v5"
 )
 
 func (m *Mirror) runSidecar() {
@@ -19,9 +22,50 @@ func (m *Mirror) runSidecar() {
 			return
 		case repo := <-reposChan:
 			slog.Info("Repo found", "repo", repo)
-			// TODO: do the thing
+			gitRepo, err := git.PlainOpen(repo)
+			if err != nil {
+				slog.Error("Error opening repo", "error", err)
+				continue
+			}
+
 			// Look at the git config, find the PAT and check if it's valid
-			// If it's not, refresh it and update the git config
+			gitConfig, err := gitRepo.Config()
+			if err != nil {
+				slog.Error("Error getting git config", "error", err)
+				continue
+			}
+
+			// Grab the remote URL
+			remoteURL := gitConfig.Raw.Section("remote").Subsection("origin").Option("url")
+			if remoteURL == "" {
+				slog.Error("No remote URL found")
+				continue
+			}
+
+			properURL, err := url.Parse(remoteURL)
+			if err != nil {
+				slog.Error("Error parsing remote URL", "error", err)
+				continue
+			}
+
+			if properURL.User == nil {
+				slog.Error("No user in remote URL")
+				continue
+			}
+
+			// Check if the PAT is valid
+			pat, ok := properURL.User.Password()
+			if !ok {
+				slog.Error("No password found in remote URL")
+				continue
+			}
+
+			if properURL.User.Username() == "oauth2" && pat != "" {
+				slog.Info("PAT found")
+				// Check if the PAT is valid
+				// If it's not, refresh it and update the git config
+			}
+
 		case <-time.After(45 * time.Minute):
 			go findRepos(m.config.GiteaAuth.ReposPath, reposChan)
 		}
