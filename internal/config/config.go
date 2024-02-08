@@ -187,9 +187,9 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	// Mirroring Token always required
-	if c.GitHubAuth.MirroringToken == "" {
-		return fmt.Errorf("GitHub Mirroring Token is required")
+	// Mirroring Token is only required if not using GitHub App auth
+	if isPATAuth && c.GitHubAuth.MirroringToken == "" {
+		return fmt.Errorf("GitHub mirroring token is required")
 	}
 
 	// Gitea URL is required

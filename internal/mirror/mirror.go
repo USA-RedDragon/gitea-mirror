@@ -89,7 +89,7 @@ func Run(config *configPkg.Config) error {
 		return nil
 	}
 
-	githubClient, giteaClient, err := authenticate(config)
+	githubClient, githubAppClient, giteaClient, err := authenticate(config)
 	if err != nil {
 		slog.Error("Error authenticating", "error", err)
 		return err
@@ -136,14 +136,23 @@ func Run(config *configPkg.Config) error {
 				githubRepo.Description = new(string)
 			}
 			slog.Info("Mirroring", "repository", *githubRepo.Name)
-			foundRepo, _, err := giteaClient.GetRepo(mirror.To.Name, *githubRepo.Name)
+			foundRepo, _, err := giteaClient.GetRepo(mirror.To.Name, fmt.Sprintf("%s%s%s", mirror.Prefix, *githubRepo.Name, mirror.Suffix))
 			if err != nil || foundRepo == nil {
+				token := config.GitHubAuth.MirroringToken
+				if config.GitHubAuth.InstallationID != 0 {
+					installToken, _, err := githubAppClient.Apps.CreateInstallationToken(context.Background(), int64(config.GitHubAuth.InstallationID), &github.InstallationTokenOptions{})
+					if err != nil {
+						slog.Error("Error creating installation token", "error", err)
+						continue
+					}
+					token = installToken.GetToken()
+				}
 				_, _, err = giteaClient.MigrateRepo(gitea.MigrateRepoOption{
 					RepoName:       fmt.Sprintf("%s%s%s", mirror.Prefix, *githubRepo.Name, mirror.Suffix),
 					RepoOwner:      mirror.To.Name,
 					Service:        gitea.GitServiceGithub,
 					CloneAddr:      *githubRepo.CloneURL,
-					AuthToken:      config.GitHubAuth.MirroringToken,
+					AuthToken:      token,
 					Private:        *githubRepo.Private,
 					Description:    *githubRepo.Description,
 					Wiki:           true,

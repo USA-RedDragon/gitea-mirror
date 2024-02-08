@@ -1,7 +1,7 @@
 github:
   # enterprise-url: "https://github.example.com"
   # token: "ghp_1234"
-  mirroring-token: "ghp_1234"
+  # mirroring-token: "ghp_1234"
   app-id: 1234
   app-install-id: 1234
   app-private-key-path: "path/to/private-key.pem"
