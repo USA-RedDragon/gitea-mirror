@@ -15,6 +15,13 @@ func authenticate(config *config.Config) (*github.Client, *gitea.Client, error) 
 
 	if config.GitHubAuth.Token != "" {
 		githubClient = github.NewClient(nil).WithAuthToken(config.GitHubAuth.Token)
+		if config.GitHubAuth.EnterpriseURL != "" {
+			var err error
+			githubClient, err = githubClient.WithEnterpriseURLs(config.GitHubAuth.EnterpriseURL, config.GitHubAuth.EnterpriseURL)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
 	} else {
 		itr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, int64(config.GitHubAuth.AppID), int64(config.GitHubAuth.InstallationID), config.GitHubAuth.PrivateKeyPath)
 		if err != nil {
