@@ -96,7 +96,7 @@ func (m *Mirror) runSidecar() {
 				_, _, err = githubClient.PullRequests.List(context.Background(), orgOrUser, repoParts[1], &github.PullRequestListOptions{})
 				if err != nil {
 					// PAT is invalid, refresh it
-					slog.Info("PAT is invalid, refreshing")
+					slog.Info("PAT is invalid, refreshing", "repo", repo, "error", err)
 					installToken, _, err := githubAppClient.Apps.CreateInstallationToken(context.Background(), int64(m.config.GitHubAuth.InstallationID), &github.InstallationTokenOptions{})
 					if err != nil {
 						slog.Error("Error creating installation token", "error", err)
