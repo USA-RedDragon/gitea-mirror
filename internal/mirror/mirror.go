@@ -72,7 +72,7 @@ func getOrgRepos(client *github.Client, entity string, data chan *github.Reposit
 		for _, repo := range repos {
 			if filter.MatchInclusion(*repo.Name) &&
 				!filter.MatchExclusion(*repo.Name) &&
-				(filter.OnlyArchived == false || *repo.Archived == filter.OnlyArchived) {
+				(!filter.OnlyArchived || (filter.OnlyArchived && *repo.Archived)) {
 				data <- repo
 			}
 		}
