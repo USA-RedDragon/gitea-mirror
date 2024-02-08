@@ -66,8 +66,6 @@ func (m *Mirror) runSidecar() {
 			}
 
 			if properURL.User.Username() == "oauth2" && pat != "" {
-				slog.Info("PAT found")
-
 				rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(nil)
 				if err != nil {
 					slog.Error("Error creating rate limiter", "error", err)
@@ -111,6 +109,11 @@ func (m *Mirror) runSidecar() {
 					properURL.User = url.UserPassword("oauth2", token)
 					remoteURL = properURL.String()
 					gitConfig.Raw.Section("remote").Subsection("origin").SetOption("url", remoteURL)
+					err = gitRepo.SetConfig(gitConfig)
+					if err != nil {
+						slog.Error("Error setting remote URL", "error", err)
+						continue
+					}
 					slog.Info("Updated remote URL")
 				}
 			}
