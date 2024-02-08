@@ -6,6 +6,7 @@ require (
 	code.gitea.io/sdk/gitea v0.17.1
 	github.com/bradleyfalzon/ghinstallation/v2 v2.9.0
 	github.com/ghodss/yaml v1.0.0
+	github.com/gofri/go-github-ratelimit v1.1.0
 	github.com/google/go-github/v58 v58.0.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
