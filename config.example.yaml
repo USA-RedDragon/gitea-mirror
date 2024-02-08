@@ -10,6 +10,10 @@ gitea:
   url: "https://gitea.example.com"
   token: "1234"
 
+# Sidecar mode is for allowing Gitea to mirror as a GitHub App. This should
+# only be used when a GitHub App is used to authenticate.
+sidecar: false
+
 mirrors:
 - prefix: archived
   from:

@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"syscall"
 
 	"github.com/USA-RedDragon/gitea-mirror/internal/config"
 	"github.com/USA-RedDragon/gitea-mirror/internal/mirror"
 	"github.com/spf13/cobra"
+	"github.com/ztrue/shutdown"
 )
 
 var (
@@ -38,5 +41,23 @@ func run(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	return mirror.Run(config)
+	mirrorInstance := mirror.New(config)
+	stop := func(sig os.Signal) {
+		slog.Info("Shutting down")
+		mirrorInstance.Stop()
+		slog.Info("Shutdown complete")
+	}
+
+	if config.Sidecar {
+		go mirrorInstance.RunUntilStopped()
+		go mirrorInstance.RunSidecar()
+
+	} else {
+		go mirrorInstance.Run()
+	}
+
+	shutdown.AddWithParam(stop)
+	shutdown.Listen(syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
+
+	return nil
 }

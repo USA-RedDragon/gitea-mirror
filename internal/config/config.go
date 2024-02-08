@@ -25,8 +25,9 @@ type GitHubAuthConfig struct {
 
 // GiteaAuthConfig is the configuration for the Gitea instance
 type GiteaAuthConfig struct {
-	URL   string `json:"url"`
-	Token string `json:"token"`
+	URL       string `json:"url"`
+	Token     string `json:"token"`
+	ReposPath string `json:"repos-path"`
 }
 
 // Entity is the type of entity to mirror
@@ -104,6 +105,7 @@ type Config struct {
 	GitHubAuth GitHubAuthConfig `json:"github"`
 	GiteaAuth  GiteaAuthConfig  `json:"gitea"`
 	Mirrors    []MirrorConfig   `json:"mirrors"`
+	Sidecar    bool             `json:"sidecar"`
 }
 
 //nolint:golint,gochecknoglobals
@@ -113,9 +115,10 @@ var (
 	GitHubAppIDKey          = "github-app-id"
 	GitHubInstallationIDKey = "github-install-id"
 	GitHubPrivateKeyPathKey = "github-private-key-path"
-	GitHubToken             = "github-token"
-	GiteaURL                = "gitea-url"
-	GiteaToken              = "gitea-token"
+	GitHubTokenKey          = "github-token"
+	GiteaURLKey             = "gitea-url"
+	GiteaTokenKey           = "gitea-token"
+	SidecarKey              = "sidecar"
 )
 
 func RegisterFlags(cmd *cobra.Command) {
@@ -124,9 +127,10 @@ func RegisterFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint(GitHubAppIDKey, 0, "GitHub App ID")
 	cmd.Flags().Uint(GitHubInstallationIDKey, 0, "GitHub App installation ID")
 	cmd.Flags().String(GitHubPrivateKeyPathKey, "", "Path to the GitHub App private key")
-	cmd.Flags().String(GitHubToken, "", "GitHub Token")
-	cmd.Flags().String(GiteaURL, "", "Gitea URL")
-	cmd.Flags().String(GiteaToken, "", "Gitea Token")
+	cmd.Flags().String(GitHubTokenKey, "", "GitHub Token")
+	cmd.Flags().String(GiteaURLKey, "", "Gitea URL")
+	cmd.Flags().String(GiteaTokenKey, "", "Gitea Token")
+	cmd.Flags().Bool(SidecarKey, false, "Run as a sidecar")
 }
 
 func (c *Config) Validate() error {
@@ -149,6 +153,11 @@ func (c *Config) Validate() error {
 	// PAT and App auth are mutually exclusive
 	if isPATAuth && isAppAuth {
 		return fmt.Errorf("GitHub PAT and App auth are mutually exclusive")
+	}
+
+	// PAT and sidecar are mutually exclusive
+	if isPATAuth && c.Sidecar {
+		return fmt.Errorf("GitHub PAT and sidecar mode are mutually exclusive")
 	}
 
 	// GitHub App ID is required if using GitHub App auth
@@ -288,24 +297,31 @@ func LoadConfig(cmd *cobra.Command) (*Config, error) {
 		}
 	}
 
-	if cmd.Flags().Changed(GitHubToken) {
-		config.GitHubAuth.Token, err = cmd.Flags().GetString(GitHubToken)
+	if cmd.Flags().Changed(GitHubTokenKey) {
+		config.GitHubAuth.Token, err = cmd.Flags().GetString(GitHubTokenKey)
 		if err != nil {
 			return &config, fmt.Errorf("failed to get GitHub Token: %w", err)
 		}
 	}
 
-	if cmd.Flags().Changed(GiteaURL) {
-		config.GiteaAuth.URL, err = cmd.Flags().GetString(GiteaURL)
+	if cmd.Flags().Changed(GiteaURLKey) {
+		config.GiteaAuth.URL, err = cmd.Flags().GetString(GiteaURLKey)
 		if err != nil {
 			return &config, fmt.Errorf("failed to get Gitea URL: %w", err)
 		}
 	}
 
-	if cmd.Flags().Changed(GiteaToken) {
-		config.GiteaAuth.Token, err = cmd.Flags().GetString(GiteaToken)
+	if cmd.Flags().Changed(GiteaTokenKey) {
+		config.GiteaAuth.Token, err = cmd.Flags().GetString(GiteaTokenKey)
 		if err != nil {
 			return &config, fmt.Errorf("failed to get Gitea Token: %w", err)
+		}
+	}
+
+	if cmd.Flags().Changed(SidecarKey) {
+		config.Sidecar, err = cmd.Flags().GetBool(SidecarKey)
+		if err != nil {
+			return &config, fmt.Errorf("failed to get sidecar mode: %w", err)
 		}
 	}
 

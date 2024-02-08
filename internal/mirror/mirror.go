@@ -4,11 +4,73 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"code.gitea.io/sdk/gitea"
 	configPkg "github.com/USA-RedDragon/gitea-mirror/internal/config"
 	"github.com/google/go-github/v58/github"
 )
+
+type Mirror struct {
+	config             *configPkg.Config
+	stopChan           chan struct{}
+	didSidecarStopChan chan struct{}
+	didRunStopChan     chan struct{}
+}
+
+func New(config *configPkg.Config) *Mirror {
+	return &Mirror{
+		config:             config,
+		stopChan:           make(chan struct{}),
+		didSidecarStopChan: make(chan struct{}),
+		didRunStopChan:     make(chan struct{}),
+	}
+}
+
+func (m *Mirror) Run() error {
+	return Run(m.config)
+}
+
+func (m *Mirror) Stop() {
+	m.stopChan <- struct{}{} // stop the main run
+	if m.config.Sidecar {
+		m.stopChan <- struct{}{} // stop the sidecar
+	}
+	slog.Info("Waiting for stop")
+	<-m.didRunStopChan
+	slog.Info("Run stopped")
+	close(m.didRunStopChan)
+	if m.config.Sidecar {
+		slog.Info("Waiting for sidecar stop")
+		<-m.didSidecarStopChan
+		slog.Info("Sidecar stopped")
+	}
+	close(m.didSidecarStopChan)
+	close(m.stopChan)
+}
+
+func (m *Mirror) RunSidecar() {
+	m.runSidecar()
+}
+
+func (m *Mirror) RunUntilStopped() {
+	run := func() {
+		err := Run(m.config)
+		if err != nil {
+			slog.Error("Error running", "error", err)
+		}
+	}
+	go run()
+	for {
+		select {
+		case <-m.stopChan:
+			m.didRunStopChan <- struct{}{}
+		case <-time.After(1 * time.Hour):
+			go run()
+		}
+	}
+
+}
 
 func getPATUserRepos(client *github.Client, data chan *github.Repository, filter configPkg.FilterConfig) error {
 	opt := &github.RepositoryListByAuthenticatedUserOptions{
