@@ -8,7 +8,7 @@ import (
 
 	"code.gitea.io/sdk/gitea"
 	configPkg "github.com/USA-RedDragon/gitea-mirror/internal/config"
-	"github.com/google/go-github/v58/github"
+	"github.com/google/go-github/v59/github"
 )
 
 type Mirror struct {
