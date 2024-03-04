@@ -8,7 +8,6 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gofri/go-github-ratelimit v1.1.0
-	github.com/google/go-github/v59 v59.0.0
 	github.com/google/go-github/v60 v60.0.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
