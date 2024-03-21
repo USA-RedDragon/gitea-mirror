@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	code.gitea.io/sdk/gitea v0.17.1
-	github.com/bradleyfalzon/ghinstallation/v2 v2.9.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gofri/go-github-ratelimit v1.1.0
