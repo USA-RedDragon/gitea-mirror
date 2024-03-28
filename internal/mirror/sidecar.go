@@ -81,47 +81,33 @@ func (m *Mirror) runSidecar() {
 				}
 				githubAppClient := github.NewClient(&http.Client{Transport: appItr})
 
-				githubClient := github.NewClient(rateLimiter).WithAuthToken(pat)
-
-				repoParts := strings.Split(strings.TrimPrefix(properURL.Path, "/"), "/")
-				if len(repoParts) != 2 {
-					slog.Error("Invalid repo path", "path", properURL.Path)
+				// Assume PAT is invalid and refresh it
+				slog.Info("Refreshing", "repo", repo, "error", err)
+				installToken, _, err := githubAppClient.Apps.CreateInstallationToken(context.Background(), int64(m.config.GitHubAuth.InstallationID), &github.InstallationTokenOptions{})
+				if err != nil {
+					slog.Error("Error creating installation token", "error", err)
 					continue
 				}
-				orgOrUser := repoParts[0]
-				repoWoGit := strings.TrimSuffix(repoParts[1], ".git")
-
-				// Check if the PAT is valid
-				_, _, err = githubClient.PullRequests.List(context.Background(), orgOrUser, repoWoGit, &github.PullRequestListOptions{})
+				properURL.User = url.UserPassword("oauth2", installToken.GetToken())
+				// Save the change
+				err = gitRepo.DeleteRemote("origin")
 				if err != nil {
-					// PAT is invalid, refresh it
-					slog.Info("PAT is invalid, refreshing", "repo", repo, "error", err)
-					installToken, _, err := githubAppClient.Apps.CreateInstallationToken(context.Background(), int64(m.config.GitHubAuth.InstallationID), &github.InstallationTokenOptions{})
-					if err != nil {
-						slog.Error("Error creating installation token", "error", err)
-						continue
-					}
-					properURL.User = url.UserPassword("oauth2", installToken.GetToken())
-					// Save the change
-					err = gitRepo.DeleteRemote("origin")
-					if err != nil {
-						slog.Error("Error deleting remote", "error", err)
-						continue
-					}
-
-					_, err = gitRepo.CreateRemote(&gitConfig.RemoteConfig{
-						Name: "origin",
-						URLs: []string{properURL.String()},
-					})
-					if err != nil {
-						slog.Error("Error creating remote", "error", err)
-						continue
-					}
-					slog.Info("Updated remote URL")
+					slog.Error("Error deleting remote", "error", err)
+					continue
 				}
+
+				_, err = gitRepo.CreateRemote(&gitConfig.RemoteConfig{
+					Name: "origin",
+					URLs: []string{properURL.String()},
+				})
+				if err != nil {
+					slog.Error("Error creating remote", "error", err)
+					continue
+				}
+				slog.Info("Updated remote URL")
 			}
 
-		case <-time.After(45 * time.Minute):
+		case <-time.After(50 * time.Minute):
 			go findRepos(m.config.GiteaAuth.ReposPath, reposChan)
 		}
 	}
