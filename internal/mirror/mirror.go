@@ -65,7 +65,7 @@ func (m *Mirror) RunUntilStopped() {
 		select {
 		case <-m.stopChan:
 			m.didRunStopChan <- struct{}{}
-		case <-time.After(1 * time.Hour):
+		case <-time.After(50 * time.Minute):
 			go run()
 		}
 	}
