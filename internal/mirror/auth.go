@@ -8,7 +8,7 @@ import (
 	"github.com/USA-RedDragon/gitea-mirror/internal/config"
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
-	"github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v63/github"
 )
 
 func authenticate(config *config.Config) (*github.Client, *github.Client, *gitea.Client, error) {
