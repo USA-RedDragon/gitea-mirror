@@ -3,7 +3,7 @@ module github.com/USA-RedDragon/gitea-mirror
 go 1.23.4
 
 require (
-	code.gitea.io/sdk/gitea v0.19.0
+	code.gitea.io/sdk/gitea v0.20.0
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.13.1
@@ -16,6 +16,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
+	github.com/42wim/httpsig v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
 	github.com/cloudflare/circl v1.3.8 // indirect
