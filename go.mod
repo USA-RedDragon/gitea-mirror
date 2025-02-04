@@ -8,7 +8,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/gofri/go-github-ratelimit v1.1.0
-	github.com/google/go-github/v62 v62.0.0
+	github.com/google/go-github/v68 v68.0.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6
 	github.com/ztrue/shutdown v0.1.1
@@ -28,7 +28,6 @@ require (
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/go-github/v68 v68.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
