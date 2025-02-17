@@ -9,7 +9,7 @@ require (
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/gofri/go-github-ratelimit v1.1.0
 	github.com/google/go-github/v62 v62.0.0
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	github.com/ztrue/shutdown v0.1.1
 )
