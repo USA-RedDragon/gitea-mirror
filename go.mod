@@ -8,7 +8,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/gofri/go-github-ratelimit v1.1.0
-	github.com/google/go-github/v62 v62.0.0
+	github.com/google/go-github/v74 v74.0.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6
 	github.com/ztrue/shutdown v0.1.1
@@ -43,5 +43,4 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-
 )
