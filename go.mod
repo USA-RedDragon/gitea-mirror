@@ -1,6 +1,6 @@
 module github.com/USA-RedDragon/gitea-mirror
 
-go 1.23.6
+go 1.25.0
 
 require (
 	code.gitea.io/sdk/gitea v0.20.0
@@ -8,7 +8,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/gofri/go-github-ratelimit v1.1.0
-	github.com/google/go-github/v62 v62.0.0
+	github.com/google/go-github/v84 v84.0.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6
 	github.com/ztrue/shutdown v0.1.1
@@ -29,7 +29,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-github/v68 v68.0.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
@@ -43,5 +43,4 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-
 )
