@@ -1,6 +1,6 @@
 module github.com/USA-RedDragon/gitea-mirror
 
-go 1.23.6
+go 1.27.0
 
 require (
 	code.gitea.io/sdk/gitea v0.20.0
@@ -43,5 +43,4 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-
 )
